@@ -19,7 +19,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.shelf.remote
-        PRODUCT_NAME: Tv
+        PRODUCT_NAME: Afstandsbediening
         TARGETED_DEVICE_FAMILY: "1"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         # Unsigned here; Sideloadly signs it with the user's own Apple ID.
@@ -35,8 +35,8 @@ targets:
         UILaunchScreen: {}
         UIRequiresFullScreen: true
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
-        UIUserInterfaceStyle: Dark
-        UIStatusBarStyle: UIStatusBarStyleLightContent
+        UIUserInterfaceStyle: Light
+        UIStatusBarStyle: UIStatusBarStyleDarkContent
         UIViewControllerBasedStatusBarAppearance: true
         # The TV's remote service: plain HTTP on the home network.
         NSAppTransportSecurity:

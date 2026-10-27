@@ -3,77 +3,71 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#e4e4e8">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Afstandsbediening">
 <link rel="manifest" href="remote.webmanifest">
 <link rel="apple-touch-icon" href="remote-icon.png">
 <title>Afstandsbediening</title>
 <style>
   :root {
-    --bg: #000; --surface: #1c1c1e; --surface-2: #2c2c2e; --ink: #f5f5f7; --dim: #8e8e93; --line: rgba(255, 255, 255, .08);
-    --green: #30d158; --red: #ff453a;
-    --b: clamp(46px, min(15vw, 7.3vh), 62px);   /* a round button on the remote */
-    --key: radial-gradient(circle at 50% 28%, #222225, #0d0d0f 72%);
-    --key-edge: inset 0 1px 0 rgba(255, 255, 255, .13), 0 1px 0 rgba(255, 255, 255, .05), 0 4px 8px rgba(0, 0, 0, .55);
-    --key-down: inset 0 2px 6px rgba(0, 0, 0, .8);
+    --ink: #1c1c1e; --dim: #6e6e73; --surface-2: #e3e3e8; --green: #30d158; --red: #ff3b30;
+    --b: clamp(46px, min(15.5vw, 7.4vh), 64px);   /* a round key on the remote */
+    --key: radial-gradient(circle at 50% 28%, #2e2e31, #121214 72%);
+    --key-edge: inset 0 1px 0 rgba(255, 255, 255, .16), 0 0 0 3px rgba(0, 0, 0, .05), 0 3px 6px rgba(0, 0, 0, .28);
+    --key-down: inset 0 2px 6px rgba(0, 0, 0, .8), 0 0 0 3px rgba(0, 0, 0, .05);
   }
   * { box-sizing: border-box; margin: 0; -webkit-tap-highlight-color: transparent; }
   [hidden] { display: none !important; }
-  html, body { height: 100%; color: var(--ink); overflow: hidden; overscroll-behavior: none; touch-action: none;
+  html, body { height: 100%; overflow: hidden; overscroll-behavior: none; color: var(--ink);
     font: 16px/1.35 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; user-select: none; -webkit-user-select: none; }
-  body { background: radial-gradient(130% 70% at 50% 28%, #1c1c20 0%, #000 72%) #000; }
+  /* The whole screen is the remote: brushed aluminium edge to edge. */
+  body {
+    background:
+      repeating-linear-gradient(90deg, rgba(255, 255, 255, .05) 0 1px, rgba(0, 0, 0, .012) 1px 3px),
+      linear-gradient(180deg, #ececef 0%, #dcdce0 55%, #cfcfd4 100%) #dcdce0;
+  }
   button { all: unset; cursor: pointer; }
   svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .err { box-shadow: 0 0 0 2px var(--red) !important; }
 
-  /* ---------- the remote itself: one aluminium body ---------- */
-  main { height: 100%; max-width: 400px; margin: 0 auto; display: flex; padding: calc(env(safe-area-inset-top) + 10px) 14px calc(env(safe-area-inset-bottom) + 10px); }
-  .remote {
-    flex: 1; max-height: 880px; margin: auto 0; display: flex; flex-direction: column; justify-content: space-between; gap: 12px;
-    padding: 16px 20px 20px; border-radius: 48px;
-    background:
-      repeating-linear-gradient(0deg, rgba(255, 255, 255, .012) 0 1px, rgba(0, 0, 0, .012) 1px 3px),
-      linear-gradient(180deg, #3d3d42 0%, #2c2c30 22%, #222225 100%);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2), inset 0 -2px 0 rgba(0, 0, 0, .5), inset 1px 0 0 rgba(255, 255, 255, .06),
-      inset -1px 0 0 rgba(255, 255, 255, .06), 0 30px 70px rgba(0, 0, 0, .7);
+  main {
+    height: 100%; max-width: 440px; margin: 0 auto; display: flex; flex-direction: column; justify-content: space-between; gap: 12px;
+    padding: calc(env(safe-area-inset-top) + 10px) 22px calc(env(safe-area-inset-bottom) + 14px); touch-action: none;
   }
-  .k { display: flex; flex-direction: column; align-items: center; gap: 5px; }
-  .lbl { font-size: 9.5px; line-height: 12px; letter-spacing: .12em; text-transform: uppercase; font-weight: 600; color: rgba(235, 235, 245, .45); }
+  .k { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .lbl { font-size: 10px; line-height: 12px; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; color: #7c7c82; }
 
   /* top: status light and power */
-  .top { display: flex; align-items: center; justify-content: space-between; padding: 2px 2px 0 6px; }
-  .status { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: rgba(235, 235, 245, .55); }
-  #dot { width: 7px; height: 7px; border-radius: 50%; background: #555; }
-  #dot.on { background: var(--green); box-shadow: 0 0 8px var(--green); }
-  #power { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; color: var(--red); background: var(--key); box-shadow: var(--key-edge); transition: transform .08s, box-shadow .08s; }
+  .top { display: flex; align-items: center; justify-content: space-between; padding-left: 4px; }
+  .status { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: #5a5a5f; }
+  #dot { width: 8px; height: 8px; border-radius: 50%; background: #a1a1a6; }
+  #dot.on { background: var(--green); box-shadow: 0 0 6px rgba(48, 209, 88, .8); }
+  #power { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; color: #ff453a; background: var(--key); box-shadow: var(--key-edge); transition: transform .08s, box-shadow .08s; }
   #power svg { width: 20px; height: 20px; }
   #power.off { color: var(--green); }
 
-  /* clickpad: swipe = arrows, press the ring = that direction, press the middle = OK */
+  /* touch surface (black glass): swipe = arrows, tap = OK, tap near an edge = that direction */
   #pad {
-    position: relative; align-self: center; width: min(100%, 35vh, 280px); aspect-ratio: 1; flex: none; border-radius: 50%; overflow: hidden;
-    background: radial-gradient(circle at 50% 30%, #1e1e21, #0b0b0c 75%);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), 0 0 0 1px rgba(0, 0, 0, .55), 0 8px 18px rgba(0, 0, 0, .55);
+    position: relative; flex: none; height: clamp(190px, 33vh, 320px); border-radius: 30px; overflow: hidden; touch-action: none;
+    background: linear-gradient(160deg, #2a2a2d 0%, #111113 45%, #0b0b0c 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), 0 0 0 1px rgba(0, 0, 0, .25), 0 6px 14px rgba(0, 0, 0, .22);
   }
-  #pad .disc {
-    position: absolute; inset: 22%; border-radius: 50%; display: grid; place-items: center; transition: inset .25s, box-shadow .1s;
-    background: radial-gradient(circle at 50% 30%, #19191b, #0e0e10); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .07), 0 1px 0 rgba(255, 255, 255, .04);
-    font-size: 13px; font-weight: 600; letter-spacing: .1em; color: rgba(235, 235, 245, .35);
-  }
-  #pad.arrows .disc { inset: 33%; }
-  #pad .disc.down { box-shadow: inset 0 2px 10px rgba(0, 0, 0, .95), inset 0 0 0 1px rgba(255, 255, 255, .1); color: #fff; }
-  #pad .edge { position: absolute; width: 22px; height: 22px; color: rgba(255, 255, 255, .4); transition: color .15s; }
+  #pad .edge { position: absolute; color: rgba(255, 255, 255, .28); transition: color .15s; }
   #pad .edge.lit { color: #fff; }
-  #pad [data-dir=up] { top: 7.5%; left: 50%; translate: -50% 0; } #pad [data-dir=down] { bottom: 7.5%; left: 50%; translate: -50% 0; }
-  #pad [data-dir=left] { left: 7.5%; top: 50%; translate: 0 -50%; } #pad [data-dir=right] { right: 7.5%; top: 50%; translate: 0 -50%; }
+  #pad [data-dir=up] { top: 12px; left: 50%; translate: -50% 0; } #pad [data-dir=down] { bottom: 12px; left: 50%; translate: -50% 0; }
+  #pad [data-dir=left] { left: 12px; top: 50%; translate: 0 -50%; } #pad [data-dir=right] { right: 12px; top: 50%; translate: 0 -50%; }
   #glow {
-    position: absolute; width: 140px; height: 140px; margin: -70px 0 0 -70px; border-radius: 50%; pointer-events: none; opacity: 0;
-    background: radial-gradient(closest-side, rgba(255, 255, 255, .14), rgba(255, 255, 255, 0)); transition: opacity .25s;
+    position: absolute; width: 150px; height: 150px; margin: -75px 0 0 -75px; border-radius: 50%; pointer-events: none; opacity: 0;
+    background: radial-gradient(closest-side, rgba(255, 255, 255, .18), rgba(255, 255, 255, 0)); transition: opacity .25s;
   }
   #glow.on { opacity: 1; transition: opacity .05s; }
+  #ok-ring { position: absolute; left: 50%; top: 50%; width: 76px; height: 76px; margin: -38px 0 0 -38px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, .55); opacity: 0; pointer-events: none; }
+  #ok-ring.go { animation: ring .35s ease-out; }
+  @keyframes ring { from { opacity: 1; transform: scale(.6); } to { opacity: 0; transform: scale(1.3); } }
+  #hint { position: absolute; left: 0; right: 0; bottom: 42px; text-align: center; font-size: 13px; color: rgba(255, 255, 255, .45); transition: opacity .4s; pointer-events: none; }
 
   /* round keys, with the volume and channel rockers on either side */
   .keys { display: grid; grid-template-columns: repeat(3, 1fr); row-gap: 12px; justify-items: center; }
@@ -81,87 +75,104 @@
   .btn svg { width: calc(var(--b) * .4); height: calc(var(--b) * .4); }
   .tall { grid-row: span 2; }
   .rocker {
-    width: var(--b); height: calc(var(--b) * 2 + 29px); border-radius: calc(var(--b) / 2); display: flex; flex-direction: column; align-items: center;
-    background: linear-gradient(180deg, #1d1d20, #0e0e10); box-shadow: var(--key-edge); overflow: hidden;
+    width: var(--b); height: calc(var(--b) * 2 + 30px); border-radius: calc(var(--b) / 2); display: flex; flex-direction: column; align-items: center;
+    background: linear-gradient(180deg, #2a2a2d, #121214); box-shadow: var(--key-edge); overflow: hidden;
   }
   .rocker button { flex: 1; width: 100%; display: grid; place-items: center; color: #f2f2f4; transition: background .08s; }
   .rocker button svg { width: calc(var(--b) * .38); height: calc(var(--b) * .38); }
-  .rocker span { font-size: 11px; font-weight: 600; color: rgba(235, 235, 245, .5); font-variant-numeric: tabular-nums; min-height: 14px; }
+  .rocker span { font-size: 12px; font-weight: 600; color: rgba(235, 235, 245, .55); font-variant-numeric: tabular-nums; min-height: 14px; }
   .btn.hit, #power.hit { transform: translateY(1px) scale(.96); box-shadow: var(--key-down); }
-  .rocker button.hit { background: rgba(0, 0, 0, .55); }
+  .rocker button.hit { background: rgba(255, 255, 255, .1); }
 
-  /* shortcuts at the bottom of the remote */
+  /* shortcuts along the bottom edge */
   .shortcuts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
   .shortcuts button {
-    height: 54px; border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
-    background: rgba(0, 0, 0, .28); box-shadow: inset 0 1px 2px rgba(0, 0, 0, .5), 0 1px 0 rgba(255, 255, 255, .06);
-    font-size: 11px; font-weight: 500; color: rgba(235, 235, 245, .8); transition: background .1s;
+    height: 58px; border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    background: linear-gradient(180deg, #f7f7f9, #e6e6ea); box-shadow: 0 1px 0 rgba(255, 255, 255, .9) inset, 0 0 0 1px rgba(0, 0, 0, .07), 0 2px 4px rgba(0, 0, 0, .1);
+    font-size: 12px; font-weight: 600; color: #3a3a3c; transition: transform .08s, background .08s;
   }
-  .shortcuts button:active { background: rgba(0, 0, 0, .5); }
-  .shortcuts svg { width: 20px; height: 20px; color: #f2f2f4; }
+  .shortcuts button.hit { transform: scale(.96); background: #dcdce0; }
+  .shortcuts svg { width: 21px; height: 21px; color: #1c1c1e; }
 
   /* ---------- sheets ---------- */
-  #scrim { position: fixed; inset: 0; background: rgba(0, 0, 0, .5); opacity: 0; pointer-events: none; transition: opacity .25s; }
+  #scrim { position: fixed; inset: 0; background: rgba(0, 0, 0, .3); opacity: 0; pointer-events: none; transition: opacity .25s; }
   #scrim.on { opacity: 1; pointer-events: auto; }
   .sheet {
-    position: fixed; left: 0; right: 0; bottom: 0; max-width: 440px; margin: 0 auto; max-height: 78%;
-    background: rgba(28, 28, 30, .94); backdrop-filter: blur(30px) saturate(1.6); -webkit-backdrop-filter: blur(30px) saturate(1.6);
-    border-radius: 24px 24px 0 0; padding: 10px 20px calc(env(safe-area-inset-bottom) + 22px);
-    transform: translateY(105%); transition: transform .32s cubic-bezier(.2, .8, .2, 1); display: flex; flex-direction: column; touch-action: pan-y;
+    position: fixed; left: 0; right: 0; bottom: 0; max-width: 440px; margin: 0 auto; max-height: 80%;
+    background: rgba(246, 246, 248, .96); backdrop-filter: blur(30px) saturate(1.6); -webkit-backdrop-filter: blur(30px) saturate(1.6);
+    border-radius: 24px 24px 0 0; padding: 10px 20px calc(env(safe-area-inset-bottom) + 22px); box-shadow: 0 -10px 30px rgba(0, 0, 0, .15);
+    transform: translateY(105%); transition: transform .32s cubic-bezier(.2, .8, .2, 1); display: flex; flex-direction: column;
   }
   .sheet.on { transform: none; }
-  .grab { width: 38px; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, .25); margin: 0 auto 14px; flex: none; }
-  .sheet h2 { font-size: 20px; font-weight: 700; margin-bottom: 14px; }
-  .scroll { overflow-y: auto; -webkit-overflow-scrolling: touch; }
-  .apps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px 10px; }
-  .app { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12px; color: var(--ink); text-align: center; transition: transform .1s; }
+  .grab { width: 38px; height: 5px; border-radius: 3px; background: rgba(0, 0, 0, .18); margin: 0 auto 14px; flex: none; }
+  .sheet h2 { font-size: 20px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; }
+  .close { font-size: 16px; font-weight: 600; color: #007aff; padding: 4px 2px; }
+  .scroll { overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y; overscroll-behavior: contain; min-height: 0; }
+  .apps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px 10px; padding-bottom: 6px; }
+  .app { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12px; color: var(--ink); text-align: center; min-width: 0; transition: transform .1s; }
   .app.hit { transform: scale(.92); }
-  .app .ic { width: 60px; height: 60px; border-radius: 15px; background: var(--surface-2); display: grid; place-items: center; overflow: hidden; font-size: 24px; font-weight: 600; }
-  .app .ic img { width: 100%; height: 100%; object-fit: cover; }
+  .app .ic { width: 62px; height: 62px; border-radius: 15px; background: #d1d1d6; display: grid; place-items: center; overflow: hidden; font-size: 24px; font-weight: 600; color: #3a3a3c; box-shadow: 0 1px 3px rgba(0, 0, 0, .15); }
+  .app .ic img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
   .app span { width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .list button { display: flex; align-items: center; gap: 12px; width: 100%; height: 56px; padding: 0 14px; border-radius: 14px; font-size: 17px; transition: background .1s; }
   .list button.hit { background: var(--surface-2); }
-  .list .live { margin-left: auto; font-size: 13px; color: var(--green); }
+  .list .live { margin-left: auto; font-size: 13px; color: #248a3d; }
   .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .tile { height: 78px; border-radius: 16px; background: var(--surface-2); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font-size: 13px; transition: transform .1s; }
+  .tile { height: 78px; border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, .06); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font-size: 13px; transition: transform .1s; }
   .tile.hit { transform: scale(.94); }
   .colors { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
   .colors button { height: 38px; border-radius: 12px; transition: transform .1s; }
   .colors button.hit { transform: scale(.94); }
-  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; padding: 12px 14px; border-radius: 14px; background: var(--surface-2); font-size: 15px; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; padding: 12px 14px; border-radius: 14px; background: #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, .06); font-size: 15px; }
   .row small { display: block; font-size: 12px; color: var(--dim); }
-  .switch { flex: none; width: 50px; height: 30px; border-radius: 15px; background: #48484a; position: relative; transition: background .2s; }
-  .switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 26px; height: 26px; border-radius: 50%; background: #fff; transition: translate .2s; }
+  .switch { flex: none; width: 50px; height: 30px; border-radius: 15px; background: #e3e3e8; position: relative; transition: background .2s; }
+  .switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 26px; height: 26px; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px rgba(0, 0, 0, .2); transition: translate .2s; }
   .switch.on { background: var(--green); } .switch.on::after { translate: 20px 0; }
-  .typer { display: flex; gap: 10px; }
-  .typer input { flex: 1; min-width: 0; height: 50px; padding: 0 16px; border: 0; border-radius: 14px; background: var(--surface-2); color: var(--ink); font: inherit; outline: none; user-select: text; -webkit-user-select: text; }
-  .typer button { height: 50px; padding: 0 18px; border-radius: 14px; background: var(--ink); color: #000; font-weight: 600; display: grid; place-items: center; }
   .note { font-size: 13px; color: var(--dim); margin-top: 10px; }
 
+  /* typing: a panel from the top, so the phone keyboard never covers it */
+  #typing {
+    top: 0; bottom: auto; max-height: none; border-radius: 0 0 24px 24px; transform: translateY(-105%);
+    padding: calc(env(safe-area-inset-top) + 14px) 20px 18px; box-shadow: 0 10px 30px rgba(0, 0, 0, .18);
+  }
+  #typing.on { transform: none; }
+  .field { display: flex; align-items: center; gap: 8px; height: 54px; padding: 0 8px 0 16px; border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, .08); }
+  .field input { flex: 1; min-width: 0; height: 100%; border: 0; background: none; color: var(--ink); font-family: inherit; font-size: 19px; outline: none; user-select: text; -webkit-user-select: text; }
+  .field .clear { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; color: #8e8e93; }
+  .field .clear svg { width: 20px; height: 20px; }
+  .typer-keys { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+  .typer-keys button { height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 16px; font-weight: 600; background: #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, .08); transition: transform .08s; }
+  .typer-keys button.primary { background: #1c1c1e; color: #fff; box-shadow: none; }
+  .typer-keys button.hit { transform: scale(.97); }
+  .typer-keys svg { width: 20px; height: 20px; }
+  #live { display: flex; align-items: center; gap: 8px; }
+  #live::before { content: ""; flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+  #live.off::before { background: #a1a1a6; }
+
   /* ---------- offline ---------- */
-  #offline { position: fixed; inset: 0; background: rgba(0, 0, 0, .86); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; padding: 30px; }
+  #offline { position: fixed; inset: 0; background: rgba(236, 236, 240, .9); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; padding: 30px; }
   #offline > div { max-width: 320px; text-align: center; display: flex; flex-direction: column; gap: 14px; align-items: center; }
   #offline h2 { font-size: 22px; } #offline p { color: var(--dim); font-size: 15px; }
-  #offline .cta { height: 50px; padding: 0 22px; border-radius: 25px; background: var(--ink); color: #000; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-  #offline .ghost { color: var(--dim); font-size: 15px; padding: 8px; }
-  #toast { position: fixed; left: 50%; top: calc(env(safe-area-inset-top) + 12px); translate: -50% -20px; padding: 10px 16px; border-radius: 20px; background: rgba(44, 44, 46, .95); font-size: 14px; opacity: 0; transition: opacity .2s, translate .2s; pointer-events: none; max-width: 90vw; text-align: center; }
+  #offline .cta { height: 50px; padding: 0 22px; border-radius: 25px; background: #1c1c1e; color: #fff; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  #offline .ghost { color: #007aff; font-size: 15px; padding: 8px; }
+  #toast { position: fixed; z-index: 5; left: 50%; top: calc(env(safe-area-inset-top) + 12px); translate: -50% -20px; padding: 10px 16px; border-radius: 20px; background: rgba(28, 28, 30, .92); color: #fff; font-size: 14px; opacity: 0; transition: opacity .2s, translate .2s; pointer-events: none; max-width: 90vw; text-align: center; }
   #toast.show { opacity: 1; translate: -50% 0; }
 </style>
 </head>
 <body>
-<main><div class="remote">
+<main>
   <div class="top">
     <div class="status"><span id="dot"></span><span id="state">Verbinden…</span></div>
     <button id="power" aria-label="Aan/uit"><svg viewBox="0 0 24 24"><path d="M12 3v8"/><path d="M17.7 6.8a8 8 0 1 1-11.4 0"/></svg></button>
   </div>
 
-  <div id="pad" aria-label="Veeg om te bewegen, druk in het midden voor OK">
+  <div id="pad" aria-label="Veeg om te bewegen, tik voor OK">
     <svg class="edge" data-dir="up" viewBox="0 0 24 24"><path d="m7 14 5-5 5 5"/></svg>
     <svg class="edge" data-dir="down" viewBox="0 0 24 24"><path d="m7 10 5 5 5-5"/></svg>
     <svg class="edge" data-dir="left" viewBox="0 0 24 24"><path d="m14 7-5 5 5 5"/></svg>
     <svg class="edge" data-dir="right" viewBox="0 0 24 24"><path d="m10 7 5 5-5 5"/></svg>
-    <div class="disc">OK</div>
-    <div id="glow"></div>
+    <div id="glow"></div><div id="ok-ring"></div>
+    <div id="hint">Veeg om te bewegen · tik voor OK</div>
   </div>
 
   <div class="keys">
@@ -189,7 +200,7 @@
     <button id="kbd"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>Typen</button>
     <button data-open="more"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/></svg>Meer</button>
   </nav>
-</div></main>
+</main>
 
 <div id="scrim"></div>
 <section class="sheet" id="apps"><div class="grab"></div><h2>Apps</h2><div class="scroll"><div class="apps" id="app-grid"></div></div></section>
@@ -208,13 +219,23 @@
       <button data-key="red" aria-label="Rood" style="background:#ff453a"></button><button data-key="green" aria-label="Groen" style="background:#30d158"></button>
       <button data-key="yellow" aria-label="Geel" style="background:#ffd60a"></button><button data-key="blue" aria-label="Blauw" style="background:#0a84ff"></button>
     </div>
-    <button class="row" id="dpad-mode"><span>Grote pijltjes<small>Tik aan de rand van het rondje om te bewegen</small></span><span class="switch"></span></button>
+    <button class="row" id="dpad-mode"><span>Pijltjes aan de rand<small>Tik bij een rand van het vlak om die kant op te gaan</small></span><span class="switch"></span></button>
     <p class="note">"Scherm uit" laat alleen het geluid aan; elke knop zet het beeld weer aan.</p>
   </div>
 </section>
-<section class="sheet" id="typing"><div class="grab"></div><h2>Typen op de tv</h2>
-  <form class="typer" id="typer" autocomplete="off"><input id="text" placeholder="Bijvoorbeeld een titel" enterkeyhint="send" maxlength="200"><button type="button">Stuur</button></form>
-  <p class="note">Kies eerst een zoekvak op de tv, dan verschijnt de tekst daar.</p>
+<section class="sheet" id="typing">
+  <h2>Typen op de tv <button class="close" id="typing-done">Klaar</button></h2>
+  <form id="typer" autocomplete="off">
+    <div class="field">
+      <input id="text" placeholder="Zoek of typ…" enterkeyhint="search" maxlength="200" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      <button type="button" class="clear" id="clear" aria-label="Alles wissen" hidden><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor" stroke="none"/><path d="m15 9-6 6M9 9l6 6" stroke="#fff"/></svg></button>
+    </div>
+  </form>
+  <div class="typer-keys">
+    <button id="backspace"><svg viewBox="0 0 24 24"><path d="M21 5H9l-6 7 6 7h12z"/><path d="m17 9-6 6M11 9l6 6"/></svg>Wis letter</button>
+    <button class="primary" id="enter"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>Zoeken</button>
+  </div>
+  <p class="note" id="live"></p>
 </section>
 
 <div id="offline" hidden><div>
@@ -229,8 +250,8 @@
 <script>
 'use strict';
 const $ = (s) => document.querySelector(s);
-const APP = window.ShelfApp || null; // the Android app: Wake-on-LAN and searching the network
-const NAMES = { 'Active': 'Aan', 'Active Standby': 'Stand-by', 'Screen Off': 'Alleen geluid' };
+const APP = window.ShelfApp || null; // the phone app: Wake-on-LAN (Android) and searching the network
+const NAMES = { 'Active': 'Aan', 'Active Standby': 'Stand-by', 'Screen Off': 'Scherm uit' };
 let power = '', fails = 0, toastTimer = 0;
 
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2200); }
@@ -238,16 +259,22 @@ const buzz = (ms) => { if (APP && APP.buzz) APP.buzz(ms || 10); else if (navigat
 const post = (path, body) => fetch(path, { method: 'POST', headers: { 'X-Shelf-Remote': '1' }, body }).then((r) => r.json());
 function hit(el) { if (!el) return; el.classList.add('hit'); setTimeout(() => el.classList.remove('hit'), 120); }
 
-// Activate on lift, like a native button; a scroll (pointercancel) in a sheet doesn't count as a tap.
-// (Android's WebView doesn't fire click here, because the page disables browser touch gestures.)
+// A tap activates on lift, like a native button. It doesn't count when the finger moved (scrolling a list) or
+// when it began while a sheet was still sliding in (a quick double tap).
 let opened = 0; // when the last sheet started opening
 function tap(el, fn) {
-  let down = false;
-  // A tap that began while a sheet was still sliding in (a quick double tap) doesn't count.
-  el.addEventListener('pointerdown', () => { down = Date.now() - opened > 350; });
-  el.addEventListener('pointercancel', () => { down = false; });
-  el.addEventListener('pointerleave', () => { down = false; });
-  el.addEventListener('pointerup', (e) => { if (down) { down = false; fn(e); } });
+  let down = null;
+  el.addEventListener('pointerdown', (e) => {
+    const box = el.closest('.scroll');
+    down = Date.now() - opened > 350 ? { x: e.clientX, y: e.clientY, top: box ? box.scrollTop : 0, box } : null;
+  });
+  el.addEventListener('pointermove', (e) => { if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 10) down = null; });
+  el.addEventListener('pointercancel', () => { down = null; });
+  el.addEventListener('pointerup', (e) => {
+    const d = down; down = null;
+    if (!d || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 10 || (d.box && Math.abs(d.box.scrollTop - d.top) > 4)) return;
+    hit(el); fn(e);
+  });
 }
 
 // ---------- status ----------
@@ -257,7 +284,7 @@ async function status() {
     fails = 0; power = s.power;
     $('#offline').hidden = true;
     $('#state').textContent = NAMES[s.power] || s.power || 'Verbonden';
-    $('#dot').className = 'dot' + (s.power === 'Active' || s.power === 'Screen Off' ? ' on' : '');
+    $('#dot').className = s.power === 'Active' || s.power === 'Screen Off' ? 'on' : '';
     $('#power').classList.toggle('off', s.power !== 'Active' && s.power !== 'Screen Off');
     $('#vol').textContent = s.muted ? 'Stil' : (s.volume == null ? '–' : s.volume);
     if (APP && s.mac) APP.remember(s.mac);
@@ -280,6 +307,9 @@ const soon = (ms) => { clearTimeout(statusTimer); statusTimer = setTimeout(statu
 setInterval(() => { if (!document.hidden) status(); }, 4000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) status(); });
 status();
+// Version 3 of the TV service mirrors typing live; older ones only take the whole text at once.
+let live = false;
+fetch('/ping', { cache: 'no-store' }).then((r) => r.json()).then((p) => { live = p.version >= 3; }).catch(() => {});
 
 // ---------- buttons ----------
 async function press(key, el) {
@@ -289,14 +319,15 @@ async function press(key, el) {
     if (el) el.classList.toggle('err', !r.ok);
     if (!r.ok) toast(`${el ? el.getAttribute('aria-label') : key}: ${r.error}`);
     if (/vol|mute/.test(key)) soon(250);
-  } catch (e) { toast('Geen verbinding met de tv'); status(); }
+    return r.ok;
+  } catch (e) { toast('Geen verbinding met de tv'); status(); return false; }
 }
 document.querySelectorAll('[data-key]').forEach((el) => {
+  if (el.closest('.sheet')) { tap(el, () => press(el.dataset.key, el)); return; } // in a sheet a scroll isn't a press
   let hold = 0, rep = 0;
   const stop = () => { clearTimeout(hold); clearInterval(rep); };
   el.addEventListener('pointerdown', (e) => {
     e.preventDefault();
-    if (el.closest('.sheet') && Date.now() - opened < 350) return; // same double-tap guard as tap()
     press(el.dataset.key, el);
     if (el.hasAttribute('data-repeat')) hold = setTimeout(() => { rep = setInterval(() => press(el.dataset.key, el), 150); }, 420);
   });
@@ -320,22 +351,23 @@ tap($('#retry'), () => { if (APP) APP.rescan(); else location.reload(); });
 
 // ---------- touch surface ----------
 const pad = $('#pad'), glow = $('#glow');
-let arrows = localStorage.getItem('shelf.dpad') === '1'; // "Pijltjes": the whole pad as four big arrow zones
-const STEP = 46;  // px of swipe per arrow press
+let arrows = localStorage.getItem('shelf.dpad') === '1'; // tapping near an edge of the whole surface = that direction
+const STEP = 42;  // px of swipe per arrow press
 let start = null;
 function flash(dir) { const e = pad.querySelector(`[data-dir="${dir}"]`); e.classList.add('lit'); setTimeout(() => e.classList.remove('lit'), 160); }
 function arrow(dir) { flash(dir); press(dir); }
 function zone(x, y) {
-  // Relative to the centre, 1 = the rim. The middle disc is OK, the ring around it the four directions.
-  const r = pad.getBoundingClientRect(), dx = (x - r.left) / r.width * 2 - 1, dy = (y - r.top) / r.height * 2 - 1;
-  if (Math.hypot(dx, dy) < (arrows ? 0.34 : 0.56)) return 'ok';
+  const r = pad.getBoundingClientRect(), dx = (x - r.left) / r.width - .5, dy = (y - r.top) / r.height - .5;
+  const edge = arrows ? 0.12 : 0.32; // outside this, a tap is a direction
+  if (Math.abs(dx) < edge && Math.abs(dy) < edge) return 'ok';
   return Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'up' : 'down');
 }
 pad.addEventListener('pointerdown', (e) => {
   pad.setPointerCapture(e.pointerId);
   const r = pad.getBoundingClientRect();
-  start = { x: e.clientX, y: e.clientY, ax: e.clientX, ay: e.clientY, t: Date.now(), moved: false };
+  start = { x: e.clientX, y: e.clientY, ax: e.clientX, ay: e.clientY, moved: false };
   glow.style.left = e.clientX - r.left + 'px'; glow.style.top = e.clientY - r.top + 'px'; glow.classList.add('on');
+  hideHint();
 });
 pad.addEventListener('pointermove', (e) => {
   if (!start) return;
@@ -354,13 +386,15 @@ pad.addEventListener('pointerup', (e) => {
   const still = !start.moved && Math.hypot(e.clientX - start.x, e.clientY - start.y) < 14;
   if (still) {
     const z = zone(e.clientX, e.clientY);
-    if (z === 'ok') { const d = pad.querySelector('.disc'); d.classList.add('down'); setTimeout(() => d.classList.remove('down'), 140); press('ok'); }
+    if (z === 'ok') { const ring = $('#ok-ring'); ring.classList.remove('go'); void ring.offsetWidth; ring.classList.add('go'); press('ok'); }
     else arrow(z);
   }
   start = null;
 });
 pad.addEventListener('pointercancel', () => { glow.classList.remove('on'); start = null; });
-function setArrows(on) { arrows = on; localStorage.setItem('shelf.dpad', on ? '1' : '0'); pad.classList.toggle('arrows', on); $('#dpad-mode .switch').classList.toggle('on', on); }
+function hideHint() { $('#hint').style.opacity = 0; localStorage.setItem('shelf.hint', '1'); }
+if (localStorage.getItem('shelf.hint')) $('#hint').hidden = true;
+function setArrows(on) { arrows = on; localStorage.setItem('shelf.dpad', on ? '1' : '0'); $('#dpad-mode .switch').classList.toggle('on', on); }
 tap($('#dpad-mode'), () => setArrows(!arrows));
 setArrows(arrows);
 
@@ -371,15 +405,15 @@ function sheet(id) {
   open = id ? $('#' + id) : null;
   $('#scrim').classList.toggle('on', !!open);
   if (open) { open.classList.add('on'); opened = Date.now(); }
+  if (id !== 'typing') $('#text').blur();
 }
 tap($('#scrim'), () => sheet(null));
 document.querySelectorAll('[data-open]').forEach((b) => tap(b, () => { sheet(b.dataset.open); load(b.dataset.open); }));
-tap($('#kbd'), () => { sheet('typing'); setTimeout(() => $('#text').focus(), 320); });
-// swipe a sheet down to close it
-document.querySelectorAll('.sheet').forEach((s) => {
+// Swipe a bottom sheet down by its handle or title to close it (the list inside scrolls normally).
+document.querySelectorAll('.sheet:not(#typing)').forEach((s) => {
   let y0 = null;
-  s.addEventListener('touchstart', (e) => { y0 = s.querySelector('.scroll') && s.querySelector('.scroll').scrollTop > 0 ? null : e.touches[0].clientY; }, { passive: true });
-  s.addEventListener('touchmove', (e) => { if (y0 != null && e.touches[0].clientY - y0 > 70) { sheet(null); y0 = null; } }, { passive: true });
+  s.addEventListener('touchstart', (e) => { y0 = e.target.closest('.scroll') ? null : e.touches[0].clientY; }, { passive: true });
+  s.addEventListener('touchmove', (e) => { if (y0 != null && e.touches[0].clientY - y0 > 60) { sheet(null); y0 = null; } }, { passive: true });
 });
 
 async function load(which) {
@@ -388,13 +422,15 @@ async function load(which) {
     if (!grid.children.length) grid.innerHTML = '<p class="note">Laden…</p>';
     try {
       const list = await (await fetch('/apps', { cache: 'no-store' })).json();
+      if (!Array.isArray(list)) throw new Error(list.error || 'geen lijst');
       grid.replaceChildren(...list.map((a) => {
         const b = document.createElement('button'); b.className = 'app';
         const ic = document.createElement('div'); ic.className = 'ic';
-        if (a.icon) { const img = new Image(); img.src = a.icon; img.alt = ''; img.onerror = () => { ic.textContent = a.title[0]; }; ic.append(img); } else ic.textContent = a.title[0];
+        const letter = () => { ic.replaceChildren(); ic.textContent = (a.title || '?')[0]; };
+        if (a.icon) { const img = new Image(); img.alt = ''; img.draggable = false; img.onerror = letter; img.src = a.icon; ic.append(img); } else letter();
         const name = document.createElement('span'); name.textContent = a.title;
         b.append(ic, name);
-        tap(b, () => launch(a.id, b));
+        tap(b, () => launch(a.id));
         return b;
       }));
     } catch (e) { grid.innerHTML = '<p class="note">Apps laden lukt niet.</p>'; }
@@ -408,30 +444,65 @@ async function load(which) {
         b.innerHTML = '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8"/></svg>';
         b.append(i.title);
         if (i.live) { const l = document.createElement('span'); l.className = 'live'; l.textContent = '● signaal'; b.append(l); }
-        tap(b, () => launch(i.id, b));
+        tap(b, () => launch(i.id));
         return b;
       }));
     } catch (e) { box.innerHTML = '<p class="note">Bronnen laden lukt niet.</p>'; }
   }
 }
-async function launch(id, el) {
-  hit(el); buzz();
+async function launch(id) {
+  buzz();
   try {
     const r = await post('/launch?id=' + encodeURIComponent(id));
     if (r.ok) setTimeout(() => sheet(null), 150); else toast('Openen lukt niet: ' + r.error);
   } catch (e) { toast('Geen verbinding met de tv'); }
 }
 
-tap($('#typer button'), () => $('#typer').requestSubmit());
-$('#typer').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const text = $('#text').value;
-  if (!text) return;
-  try {
-    const r = await post('/type', text);
-    if (r.ok) { $('#text').value = ''; toast('Verstuurd'); } else toast('Typen lukt niet: ' + r.error);
-  } catch (err) { toast('Geen verbinding met de tv'); }
+// ---------- typing ----------
+// The field on the phone mirrors the TV's search box: every change goes over at once (new letters, removed
+// letters), so what you see here is what is on the TV. Older TV services take the whole text on Zoeken instead.
+const text = $('#text');
+let sent = '', queue = Promise.resolve();
+function sync() {
+  $('#clear').hidden = !text.value;
+  queue = queue.then(async () => {
+    const now = text.value;
+    if (!live || now === sent) return;
+    let p = 0;
+    while (p < now.length && p < sent.length && now[p] === sent[p]) p++;
+    const gone = sent.length - p, added = now.slice(p);
+    if (gone) { const r = await post('/erase?n=' + gone); if (!r.ok) throw new Error(r.error); }
+    if (added) { const r = await post('/type', added); if (!r.ok) throw new Error(r.error); }
+    sent = now;
+  }).catch((e) => { sent = text.value; toast('Typen lukt niet: ' + (e.message || 'geen verbinding')); });
+}
+text.addEventListener('input', sync);
+function openTyping() {
+  text.value = ''; sent = ''; $('#clear').hidden = true;
+  sheet('typing');
+  text.focus(); // inside the tap itself, or iOS won't show the keyboard
+  $('#live').classList.toggle('off', !live);
+  $('#live').textContent = live ? 'Wat je typt staat meteen op de tv. Kies eerst een zoekvak op de tv.'
+    : 'Kies eerst een zoekvak op de tv; de tekst gaat erheen als je op Zoeken tikt.';
+}
+tap($('#kbd'), openTyping);
+tap($('#typing-done'), () => sheet(null));
+tap($('#clear'), () => { text.value = ''; sync(); text.focus(); });
+tap($('#backspace'), () => {
+  if (live && !text.value) { post('/erase?n=1').catch(() => {}); buzz(); return; } // also letters that were on the TV already
+  text.value = text.value.slice(0, -1); sync();
 });
+async function search() {
+  await queue;
+  if (!live && text.value) {
+    const r = await post('/type', text.value).catch(() => ({ ok: false, error: 'geen verbinding' }));
+    if (!r.ok) { toast('Typen lukt niet: ' + r.error); return; }
+    text.value = ''; $('#clear').hidden = true;
+  }
+  if (await press(live ? 'enter' : 'ok')) text.blur();
+}
+tap($('#enter'), search);
+$('#typer').addEventListener('submit', (e) => { e.preventDefault(); search(); });
 </script>
 </body>
 </html>

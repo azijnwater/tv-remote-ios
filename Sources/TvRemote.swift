@@ -1,13 +1,14 @@
 import UIKit
 import WebKit
 
-// Tv-afstandsbediening for iPhone: the same remote page as the Android app (app/remote.html, bundled), talking
+// Afstandsbediening for iPhone: the same remote page as the Android app (app/remote.html, bundled), talking
 // to Shelf's remote service on the TV. Finds the TV by itself: the last known address, the TV's usual address,
 // then a scan of the phone's own /24 and of the TV's last /24. (Broadcast discovery and Wake-on-LAN need an
 // Apple entitlement that free signing can't get, so this version has neither.)
 
 let defaultTV = "172.22.86.210"
 let port = 8760
+let aluminium = UIColor(red: 0.86, green: 0.86, blue: 0.88, alpha: 1) // the page's background, behind the status bar
 
 @main
 final class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -15,7 +16,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         let window = UIWindow(frame: UIScreen.main.bounds)
-        window.overrideUserInterfaceStyle = .dark
+        window.overrideUserInterfaceStyle = .light
         window.rootViewController = RemoteViewController()
         window.makeKeyAndVisible()
         self.window = window
@@ -35,7 +36,7 @@ final class RemoteViewController: UIViewController, WKScriptMessageHandler, WKNa
         set { UserDefaults.standard.set(newValue, forKey: "ip") }
     }
 
-    override var preferredStatusBarStyle: UIStatusBarStyle { .lightContent }
+    override var preferredStatusBarStyle: UIStatusBarStyle { .darkContent }
 
     override func loadView() {
         let config = WKWebViewConfiguration()
@@ -57,8 +58,8 @@ final class RemoteViewController: UIViewController, WKScriptMessageHandler, WKNa
 
         web = WKWebView(frame: .zero, configuration: config)
         web.isOpaque = false
-        web.backgroundColor = .black
-        web.scrollView.backgroundColor = .black
+        web.backgroundColor = aluminium
+        web.scrollView.backgroundColor = aluminium
         web.scrollView.isScrollEnabled = false        // the page scrolls its own sheets
         web.scrollView.bounces = false
         web.scrollView.contentInsetAdjustmentBehavior = .never
