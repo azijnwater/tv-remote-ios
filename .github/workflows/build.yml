@@ -28,6 +28,6 @@ jobs:
           ls -la Afstandsbediening.ipa
       - uses: actions/upload-artifact@v4
         with:
-          name: Afstandsbediening.ipa
+          name: Afstandsbediening-ipa
           path: Afstandsbediening.ipa
           retention-days: 30

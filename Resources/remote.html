@@ -111,7 +111,7 @@
   .apps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px 10px; padding-bottom: 6px; }
   .app { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12px; color: var(--ink); text-align: center; min-width: 0; transition: transform .1s; }
   .app.hit { transform: scale(.92); }
-  .app .ic { width: 62px; height: 62px; border-radius: 15px; background: #d1d1d6; display: grid; place-items: center; overflow: hidden; font-size: 24px; font-weight: 600; color: #3a3a3c; box-shadow: 0 1px 3px rgba(0, 0, 0, .15); }
+  .app .ic { width: 62px; height: 62px; border-radius: 15px; background: #1c1c1e; display: grid; place-items: center; overflow: hidden; font-size: 24px; font-weight: 600; color: #f2f2f4; box-shadow: 0 1px 3px rgba(0, 0, 0, .15); }
   .app .ic img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
   .app span { width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .list button { display: flex; align-items: center; gap: 12px; width: 100%; height: 56px; padding: 0 14px; border-radius: 14px; font-size: 17px; transition: background .1s; }
@@ -196,7 +196,7 @@
 
   <nav class="shortcuts">
     <button data-open="apps"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>Apps</button>
-    <button data-open="inputs"><svg viewBox="0 0 24 24"><path d="M14 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/></svg>Bron</button>
+    <button data-open="inputs"><svg viewBox="0 0 24 24"><path d="M14 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/></svg>Bronnen</button>
     <button id="kbd"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>Typen</button>
     <button data-open="more"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/></svg>Meer</button>
   </nav>
@@ -288,6 +288,7 @@ async function status() {
     $('#power').classList.toggle('off', s.power !== 'Active' && s.power !== 'Screen Off');
     $('#vol').textContent = s.muted ? 'Stil' : (s.volume == null ? '–' : s.volume);
     if (APP && s.mac) APP.remember(s.mac);
+    if (!liveKnown) checkLive();
   } catch (e) {
     if (++fails >= 2) showOffline();
   }
@@ -308,12 +309,16 @@ setInterval(() => { if (!document.hidden) status(); }, 4000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) status(); });
 status();
 // Version 3 of the TV service mirrors typing live; older ones only take the whole text at once.
-let live = false;
-fetch('/ping', { cache: 'no-store' }).then((r) => r.json()).then((p) => { live = p.version >= 3; }).catch(() => {});
+let live = false, liveKnown = false;
+function checkLive() {
+  fetch('/ping', { cache: 'no-store' }).then((r) => r.json()).then((p) => { live = p.version >= 3; liveKnown = true; }).catch(() => {});
+}
 
 // ---------- buttons ----------
+let offHint = 0;
 async function press(key, el) {
   hit(el); buzz();
+  if (power === 'Active Standby' && Date.now() - offHint > 4000) { offHint = Date.now(); toast('De tv staat uit: zet hem eerst aan met de aan/uit-knop'); }
   try {
     const r = await post('/press?key=' + key);
     if (el) el.classList.toggle('err', !r.ok);
@@ -408,6 +413,7 @@ function sheet(id) {
   if (id !== 'typing') $('#text').blur();
 }
 tap($('#scrim'), () => sheet(null));
+window.remoteBack = () => { if (!open) return false; sheet(null); return true; }; // Android's back gesture
 document.querySelectorAll('[data-open]').forEach((b) => tap(b, () => { sheet(b.dataset.open); load(b.dataset.open); }));
 // Swipe a bottom sheet down by its handle or title to close it (the list inside scrolls normally).
 document.querySelectorAll('.sheet:not(#typing)').forEach((s) => {
@@ -428,7 +434,7 @@ async function load(which) {
         const ic = document.createElement('div'); ic.className = 'ic';
         const letter = () => { ic.replaceChildren(); ic.textContent = (a.title || '?')[0]; };
         if (a.icon) { const img = new Image(); img.alt = ''; img.draggable = false; img.onerror = letter; img.src = a.icon; ic.append(img); } else letter();
-        const name = document.createElement('span'); name.textContent = a.title;
+        const name = document.createElement('span'); name.textContent = (a.title || '').split(/: | - | – /)[0];
         b.append(ic, name);
         tap(b, () => launch(a.id));
         return b;
@@ -486,6 +492,8 @@ function openTyping() {
     : 'Kies eerst een zoekvak op de tv; de tekst gaat erheen als je op Zoeken tikt.';
 }
 tap($('#kbd'), openTyping);
+$('#kbd').addEventListener('click', () => { if (open && open.id === 'typing') text.focus(); });
+text.addEventListener('blur', () => setTimeout(() => window.scrollTo(0, 0), 50));
 tap($('#typing-done'), () => sheet(null));
 tap($('#clear'), () => { text.value = ''; sync(); text.focus(); });
 tap($('#backspace'), () => {
