@@ -22,7 +22,7 @@
   * { box-sizing: border-box; margin: 0; -webkit-tap-highlight-color: transparent; }
   [hidden] { display: none !important; }
   html, body { height: 100%; overflow: hidden; overscroll-behavior: none; color: var(--ink);
-    font: 16px/1.35 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; user-select: none; -webkit-user-select: none; }
+    font: 16px/1.35 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
   /* The whole screen is the remote: brushed aluminium edge to edge. */
   body {
     background:
@@ -84,7 +84,7 @@
   .rocker button svg { width: calc(var(--b) * .38); height: calc(var(--b) * .38); }
   .rocker span { font-size: 12px; font-weight: 600; color: rgba(235, 235, 245, .55); font-variant-numeric: tabular-nums; min-height: 14px; }
   .btn.hit, #power.hit { transform: translateY(1px) scale(.96); box-shadow: var(--key-down); }
-  .rocker button.hit { background: rgba(255, 255, 255, .1); }
+  .rocker button.hit, .rocker button.held { background: rgba(255, 255, 255, .1); }
 
   /* shortcuts along the bottom edge */
   .shortcuts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
@@ -189,9 +189,9 @@
     </div><span class="lbl">Volume</span></div>
     <div class="k"><button class="btn" id="playpause" aria-label="Afspelen/pauze"><svg viewBox="0 0 24 24"><path d="m3 5 8 7-8 7z" fill="currentColor" stroke="none"/><path d="M15.5 5v14M20.5 5v14"/></svg></button><span class="lbl">Play/pauze</span></div>
     <div class="k tall"><div class="rocker">
-      <button data-key="chup" aria-label="Kanaal omhoog"><svg viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></svg></button>
+      <button data-key="chup" data-repeat aria-label="Kanaal omhoog"><svg viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></svg></button>
       <span></span>
-      <button data-key="chdown" aria-label="Kanaal omlaag"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+      <button data-key="chdown" data-repeat aria-label="Kanaal omlaag"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
     </div><span class="lbl">Kanaal</span></div>
     <div class="k"><button class="btn" data-key="mute" aria-label="Geluid uit"><svg viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="m22 9-6 6M16 9l6 6"/></svg></button><span class="lbl">Stil</span></div>
   </div>
@@ -320,25 +320,42 @@ function checkLive() {
 let offHint = 0;
 async function press(key, el) {
   hit(el); buzz();
-  if (power === 'Active Standby' && Date.now() - offHint > 4000) { offHint = Date.now(); toast('De tv staat uit: zet hem eerst aan met de aan/uit-knop'); }
+  const standby = power === 'Active Standby';
+  if (standby && Date.now() - offHint > 4000) { offHint = Date.now(); toast('De tv staat uit: zet hem eerst aan met de aan/uit-knop'); }
   try {
     const r = await post('/press?key=' + key);
     if (el) el.classList.toggle('err', !r.ok);
     if (!r.ok) toast(`${el ? el.getAttribute('aria-label') : key}: ${r.error}`);
     if (/vol|mute/.test(key)) soon(250);
-    return r.ok;
+    return r.ok && !standby; // a held key doesn't keep going while the TV is off
   } catch (e) { toast('Geen verbinding met de tv'); status(); return false; }
+}
+// Holding keeps pressing: repeats start after HOLD_MS, then every REPEAT_MS, each one only once the TV has
+// answered the last (a slow network never builds up a burst that runs on after you let go). fn returning false
+// (an error) ends it.
+const HOLD_MS = 400, REPEAT_MS = 140;
+function holdRepeat(fn, delay = HOLD_MS) {
+  let on = true, timer = 0;
+  const loop = async () => {
+    if (!on) return;
+    const t0 = Date.now();
+    if ((await fn()) === false) { on = false; return; }
+    if (on) timer = setTimeout(loop, Math.max(0, REPEAT_MS - (Date.now() - t0)));
+  };
+  timer = setTimeout(loop, delay);
+  return () => { on = false; clearTimeout(timer); };
 }
 document.querySelectorAll('[data-key]').forEach((el) => {
   if (el.closest('.sheet')) { tap(el, () => press(el.dataset.key, el)); return; } // in a sheet a scroll isn't a press
-  let hold = 0, rep = 0;
-  const stop = () => { clearTimeout(hold); clearInterval(rep); };
+  let stop = null;
+  const end = () => { if (stop) { stop(); stop = null; } el.classList.remove('held'); };
   el.addEventListener('pointerdown', (e) => {
     e.preventDefault();
+    end();
     press(el.dataset.key, el);
-    if (el.hasAttribute('data-repeat')) hold = setTimeout(() => { rep = setInterval(() => press(el.dataset.key, el), 150); }, 420);
+    if (el.hasAttribute('data-repeat')) { el.classList.add('held'); stop = holdRepeat(() => press(el.dataset.key, el)); }
   });
-  ['pointerup', 'pointerleave', 'pointercancel'].forEach((t) => el.addEventListener(t, stop));
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach((t) => el.addEventListener(t, end));
 });
 // Play and pause are separate keys on the TV; one button alternates between them.
 let playing = true;
@@ -361,10 +378,18 @@ const pad = $('#pad'), glow = $('#glow');
 let arrows = localStorage.getItem('shelf.dpad') === '1'; // tapping near an edge of the whole surface = that direction
 // One swipe is one step: the first arrow after FIRST px, then one more per NEXT px of the same drag (so a long
 // drag still walks a row). Anything that isn't a swipe is a tap, judged where the finger went down: thumbs drift.
-const FIRST = 40, NEXT = 140;
+// Holding keeps going: a finger held on an arrow's strip repeats that arrow, and so does a finger that stops
+// after a swipe (until it moves again or lets go) — the way to run through a long row.
+const FIRST = 40, NEXT = 140, STILL = 12, SWIPE_HOLD_MS = 450;
 let start = null;
 function flash(dir) { const e = pad.querySelector(`[data-dir="${dir}"]`); e.classList.add('lit'); setTimeout(() => e.classList.remove('lit'), 160); }
-function arrow(dir) { flash(dir); press(dir); }
+function arrow(dir) { flash(dir); return press(dir); }
+function holdArrow(dir, delay) {
+  if (start.stop) start.stop();
+  const g = start;
+  start.stop = holdRepeat(() => { g.held = g.repeated = true; return arrow(dir); }, delay);
+}
+function stopHold() { if (start && start.stop) { start.stop(); start.stop = null; } }
 function zone(x, y) {
   const r = pad.getBoundingClientRect(), dx = (x - r.left) / r.width - .5, dy = (y - r.top) / r.height - .5;
   const edge = arrows ? 0.12 : 0.38; // outside this (the strip by each arrow), a tap is that direction
@@ -373,34 +398,49 @@ function zone(x, y) {
 }
 const dirOf = (dx, dy) => (Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'));
 pad.addEventListener('pointerdown', (e) => {
-  pad.setPointerCapture(e.pointerId);
+  try { pad.setPointerCapture(e.pointerId); } catch (err) { /* touch pointers are captured anyway */ }
   const r = pad.getBoundingClientRect();
-  start = { x: e.clientX, y: e.clientY, ax: e.clientX, ay: e.clientY, swiped: false };
+  stopHold();
+  start = { x: e.clientX, y: e.clientY, ax: e.clientX, ay: e.clientY, mx: e.clientX, my: e.clientY, swiped: false, held: false, dir: null, stop: null };
   glow.style.left = e.clientX - r.left + 'px'; glow.style.top = e.clientY - r.top + 'px'; glow.classList.add('on');
   hideHint();
+  const z = zone(e.clientX, e.clientY);
+  if (z !== 'ok') holdArrow(z, HOLD_MS);
 });
 pad.addEventListener('pointermove', (e) => {
   if (!start) return;
   const r = pad.getBoundingClientRect();
   glow.style.left = e.clientX - r.left + 'px'; glow.style.top = e.clientY - r.top + 'px';
+  // A finger that moves isn't holding still: no edge repeat before a swipe, and a running repeat stops.
+  if (Math.hypot(e.clientX - start.mx, e.clientY - start.my) > STILL) {
+    start.mx = e.clientX; start.my = e.clientY;
+    stopHold();
+    if (start.held) { start.held = false; start.fresh = true; start.ax = e.clientX; start.ay = e.clientY; } // swiping again goes on from here
+    if (start.swiped) holdArrow(start.dir, SWIPE_HOLD_MS);
+  }
   const dx = e.clientX - start.ax, dy = e.clientY - start.ay;
-  if (Math.max(Math.abs(dx), Math.abs(dy)) >= (start.swiped ? NEXT : FIRST)) {
-    start.swiped = true;
-    arrow(dirOf(dx, dy));
+  // A swipe after a pause, or the other way, is a new swipe: it steps after FIRST px again.
+  const first = !start.swiped || start.fresh || dirOf(dx, dy) !== start.dir;
+  if (Math.max(Math.abs(dx), Math.abs(dy)) >= (first ? FIRST : NEXT)) {
+    start.swiped = true; start.fresh = false;
+    start.dir = dirOf(dx, dy);
+    arrow(start.dir);
     start.ax = e.clientX; start.ay = e.clientY;
+    holdArrow(start.dir, SWIPE_HOLD_MS);
   }
 });
 pad.addEventListener('pointerup', () => {
   glow.classList.remove('on');
   if (!start) return;
-  if (!start.swiped) {
+  stopHold();
+  if (!start.swiped && !start.repeated) {
     const z = zone(start.x, start.y);
     if (z === 'ok') { const ring = $('#ok-ring'); ring.classList.remove('go'); void ring.offsetWidth; ring.classList.add('go'); press('ok'); }
     else arrow(z);
   }
   start = null;
 });
-pad.addEventListener('pointercancel', () => { glow.classList.remove('on'); start = null; });
+pad.addEventListener('pointercancel', () => { glow.classList.remove('on'); stopHold(); start = null; });
 function hideHint() { $('#hint').style.opacity = 0; localStorage.setItem('shelf.hint', '1'); }
 if (localStorage.getItem('shelf.hint')) $('#hint').hidden = true;
 function setArrows(on) { arrows = on; localStorage.setItem('shelf.dpad', on ? '1' : '0'); $('#dpad-mode .switch').classList.toggle('on', on); }
@@ -499,11 +539,23 @@ tap($('#kbd'), openTyping);
 $('#kbd').addEventListener('click', () => { if (open && open.id === 'typing') text.focus(); });
 text.addEventListener('blur', () => setTimeout(() => window.scrollTo(0, 0), 50));
 tap($('#typing-done'), () => sheet(null));
+// The typing keys don't take the focus from the field, or the phone keyboard would drop away on every tap.
+['#clear', '#backspace'].forEach((s) => $(s).addEventListener('pointerdown', (e) => e.preventDefault()));
 tap($('#clear'), () => { text.value = ''; sync(); text.focus(); });
-tap($('#backspace'), () => {
-  if (live && !text.value) { post('/erase?n=1').catch(() => {}); buzz(); return; } // also letters that were on the TV already
+// Delete: one letter per tap, and holding it keeps deleting.
+function deleteOne() {
+  buzz();
+  if (live && !text.value) return post('/erase?n=1').then((r) => r.ok).catch(() => false); // letters already on the TV
   text.value = text.value.slice(0, -1); sync();
-});
+  return true;
+}
+{
+  const key = $('#backspace');
+  let stop = null;
+  const end = () => { if (stop) { stop(); stop = null; } };
+  key.addEventListener('pointerdown', () => { end(); hit(key); deleteOne(); stop = holdRepeat(deleteOne); });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach((t) => key.addEventListener(t, end));
+}
 async function search() {
   await queue;
   if (!live && text.value) {
