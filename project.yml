@@ -29,7 +29,7 @@ targets:
     info:
       path: Info.plist
       properties:
-        CFBundleDisplayName: Tv
+        CFBundleDisplayName: Afstandsbediening
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         UILaunchScreen: {}

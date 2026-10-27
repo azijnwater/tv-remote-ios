@@ -7,77 +7,105 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Tv">
+<meta name="apple-mobile-web-app-title" content="Afstandsbediening">
 <link rel="manifest" href="remote.webmanifest">
 <link rel="apple-touch-icon" href="remote-icon.png">
-<title>Tv</title>
+<title>Afstandsbediening</title>
 <style>
   :root {
     --bg: #000; --surface: #1c1c1e; --surface-2: #2c2c2e; --ink: #f5f5f7; --dim: #8e8e93; --line: rgba(255, 255, 255, .08);
-    --green: #30d158; --red: #ff453a; --r: 28px;
+    --green: #30d158; --red: #ff453a;
+    --b: clamp(46px, min(15vw, 7.3vh), 62px);   /* a round button on the remote */
+    --key: radial-gradient(circle at 50% 28%, #222225, #0d0d0f 72%);
+    --key-edge: inset 0 1px 0 rgba(255, 255, 255, .13), 0 1px 0 rgba(255, 255, 255, .05), 0 4px 8px rgba(0, 0, 0, .55);
+    --key-down: inset 0 2px 6px rgba(0, 0, 0, .8);
   }
   * { box-sizing: border-box; margin: 0; -webkit-tap-highlight-color: transparent; }
   [hidden] { display: none !important; }
-  html, body { height: 100%; background: var(--bg); color: var(--ink); overflow: hidden; overscroll-behavior: none; touch-action: none;
+  html, body { height: 100%; color: var(--ink); overflow: hidden; overscroll-behavior: none; touch-action: none;
     font: 16px/1.35 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; user-select: none; -webkit-user-select: none; }
+  body { background: radial-gradient(130% 70% at 50% 28%, #1c1c20 0%, #000 72%) #000; }
   button { all: unset; cursor: pointer; }
   svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-  main {
-    height: 100%; max-width: 440px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px;
-    padding: calc(env(safe-area-inset-top) + 18px) 22px calc(env(safe-area-inset-bottom) + 18px);
-  }
+  .err { box-shadow: 0 0 0 2px var(--red) !important; }
 
-  /* ---------- header ---------- */
-  header { display: flex; align-items: center; justify-content: space-between; }
-  h1 { font-size: 28px; font-weight: 700; letter-spacing: -.4px; }
-  #sub { font-size: 14px; color: var(--dim); margin-top: 1px; }
-  #sub .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--dim); margin-right: 6px; vertical-align: 1px; }
-  #sub .dot.on { background: var(--green); }
-  .round {
-    width: 64px; height: 64px; border-radius: 50%; background: var(--surface); display: grid; place-items: center;
-    transition: transform .1s, background .1s;
+  /* ---------- the remote itself: one aluminium body ---------- */
+  main { height: 100%; max-width: 400px; margin: 0 auto; display: flex; padding: calc(env(safe-area-inset-top) + 10px) 14px calc(env(safe-area-inset-bottom) + 10px); }
+  .remote {
+    flex: 1; max-height: 880px; margin: auto 0; display: flex; flex-direction: column; justify-content: space-between; gap: 12px;
+    padding: 16px 20px 20px; border-radius: 48px;
+    background:
+      repeating-linear-gradient(0deg, rgba(255, 255, 255, .012) 0 1px, rgba(0, 0, 0, .012) 1px 3px),
+      linear-gradient(180deg, #3d3d42 0%, #2c2c30 22%, #222225 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2), inset 0 -2px 0 rgba(0, 0, 0, .5), inset 1px 0 0 rgba(255, 255, 255, .06),
+      inset -1px 0 0 rgba(255, 255, 255, .06), 0 30px 70px rgba(0, 0, 0, .7);
   }
-  .round.hit, .pill button.hit, .tile.hit { transform: scale(.92); background: var(--surface-2); }
-  .err { box-shadow: 0 0 0 2px var(--red); }
-  #power { width: 48px; height: 48px; color: var(--red); }
+  .k { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+  .lbl { font-size: 9.5px; line-height: 12px; letter-spacing: .12em; text-transform: uppercase; font-weight: 600; color: rgba(235, 235, 245, .45); }
+
+  /* top: status light and power */
+  .top { display: flex; align-items: center; justify-content: space-between; padding: 2px 2px 0 6px; }
+  .status { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: rgba(235, 235, 245, .55); }
+  #dot { width: 7px; height: 7px; border-radius: 50%; background: #555; }
+  #dot.on { background: var(--green); box-shadow: 0 0 8px var(--green); }
+  #power { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; color: var(--red); background: var(--key); box-shadow: var(--key-edge); transition: transform .08s, box-shadow .08s; }
+  #power svg { width: 20px; height: 20px; }
   #power.off { color: var(--green); }
 
-  /* ---------- touch surface: swipe = arrows, tap = OK, tap the edge = that direction ---------- */
+  /* clickpad: swipe = arrows, press the ring = that direction, press the middle = OK */
   #pad {
-    position: relative; flex: 1; min-height: 240px; border-radius: var(--r); background: var(--surface); overflow: hidden;
-    box-shadow: inset 0 0 0 1px var(--line);
+    position: relative; align-self: center; width: min(100%, 35vh, 280px); aspect-ratio: 1; flex: none; border-radius: 50%; overflow: hidden;
+    background: radial-gradient(circle at 50% 30%, #1e1e21, #0b0b0c 75%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), 0 0 0 1px rgba(0, 0, 0, .55), 0 8px 18px rgba(0, 0, 0, .55);
   }
-  #pad .edge { position: absolute; color: rgba(255, 255, 255, .22); transition: color .15s; }
-  #pad .edge.lit { color: rgba(255, 255, 255, .9); }
-  #pad [data-dir=up] { top: 14px; left: 50%; translate: -50% 0; } #pad [data-dir=down] { bottom: 14px; left: 50%; translate: -50% 0; }
-  #pad [data-dir=left] { left: 14px; top: 50%; translate: 0 -50%; } #pad [data-dir=right] { right: 14px; top: 50%; translate: 0 -50%; }
+  #pad .disc {
+    position: absolute; inset: 22%; border-radius: 50%; display: grid; place-items: center; transition: inset .25s, box-shadow .1s;
+    background: radial-gradient(circle at 50% 30%, #19191b, #0e0e10); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .07), 0 1px 0 rgba(255, 255, 255, .04);
+    font-size: 13px; font-weight: 600; letter-spacing: .1em; color: rgba(235, 235, 245, .35);
+  }
+  #pad.arrows .disc { inset: 33%; }
+  #pad .disc.down { box-shadow: inset 0 2px 10px rgba(0, 0, 0, .95), inset 0 0 0 1px rgba(255, 255, 255, .1); color: #fff; }
+  #pad .edge { position: absolute; width: 22px; height: 22px; color: rgba(255, 255, 255, .4); transition: color .15s; }
+  #pad .edge.lit { color: #fff; }
+  #pad [data-dir=up] { top: 7.5%; left: 50%; translate: -50% 0; } #pad [data-dir=down] { bottom: 7.5%; left: 50%; translate: -50% 0; }
+  #pad [data-dir=left] { left: 7.5%; top: 50%; translate: 0 -50%; } #pad [data-dir=right] { right: 7.5%; top: 50%; translate: 0 -50%; }
   #glow {
-    position: absolute; width: 150px; height: 150px; margin: -75px 0 0 -75px; border-radius: 50%; pointer-events: none; opacity: 0;
-    background: radial-gradient(closest-side, rgba(255, 255, 255, .16), rgba(255, 255, 255, 0)); transition: opacity .25s;
+    position: absolute; width: 140px; height: 140px; margin: -70px 0 0 -70px; border-radius: 50%; pointer-events: none; opacity: 0;
+    background: radial-gradient(closest-side, rgba(255, 255, 255, .14), rgba(255, 255, 255, 0)); transition: opacity .25s;
   }
   #glow.on { opacity: 1; transition: opacity .05s; }
-  #ok-ring { position: absolute; left: 50%; top: 50%; width: 76px; height: 76px; margin: -38px 0 0 -38px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, .5); opacity: 0; pointer-events: none; }
-  #ok-ring.go { animation: ring .35s ease-out; }
-  @keyframes ring { from { opacity: 1; transform: scale(.6); } to { opacity: 0; transform: scale(1.3); } }
-  #hint { position: absolute; left: 0; right: 0; bottom: 46px; text-align: center; font-size: 14px; color: var(--dim); transition: opacity .4s; pointer-events: none; }
 
-  /* ---------- buttons under the pad ---------- */
-  .keys { display: grid; grid-template-columns: repeat(4, 64px); justify-content: space-between; row-gap: 16px; }
-  .pill { grid-column: span 2; height: 64px; border-radius: 32px; background: var(--surface); display: flex; align-items: center; justify-content: space-between; }
-  .pill button { width: 64px; height: 64px; border-radius: 32px; display: grid; place-items: center; transition: transform .1s, background .1s; }
-  .pill span { font-size: 15px; color: var(--dim); font-variant-numeric: tabular-nums; min-width: 2ch; text-align: center; }
+  /* round keys, with the volume and channel rockers on either side */
+  .keys { display: grid; grid-template-columns: repeat(3, 1fr); row-gap: 12px; justify-items: center; }
+  .btn { width: var(--b); height: var(--b); border-radius: 50%; display: grid; place-items: center; color: #f2f2f4; background: var(--key); box-shadow: var(--key-edge); transition: transform .08s, box-shadow .08s; }
+  .btn svg { width: calc(var(--b) * .4); height: calc(var(--b) * .4); }
+  .tall { grid-row: span 2; }
+  .rocker {
+    width: var(--b); height: calc(var(--b) * 2 + 29px); border-radius: calc(var(--b) / 2); display: flex; flex-direction: column; align-items: center;
+    background: linear-gradient(180deg, #1d1d20, #0e0e10); box-shadow: var(--key-edge); overflow: hidden;
+  }
+  .rocker button { flex: 1; width: 100%; display: grid; place-items: center; color: #f2f2f4; transition: background .08s; }
+  .rocker button svg { width: calc(var(--b) * .38); height: calc(var(--b) * .38); }
+  .rocker span { font-size: 11px; font-weight: 600; color: rgba(235, 235, 245, .5); font-variant-numeric: tabular-nums; min-height: 14px; }
+  .btn.hit, #power.hit { transform: translateY(1px) scale(.96); box-shadow: var(--key-down); }
+  .rocker button.hit { background: rgba(0, 0, 0, .55); }
 
-  nav { display: flex; gap: 10px; }
-  nav button { flex: 1; height: 50px; border-radius: 16px; background: var(--surface); display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; font-weight: 500; transition: transform .1s; }
-  nav button svg { width: 20px; height: 20px; }
-  nav button:active { transform: scale(.96); }
+  /* shortcuts at the bottom of the remote */
+  .shortcuts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .shortcuts button {
+    height: 54px; border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    background: rgba(0, 0, 0, .28); box-shadow: inset 0 1px 2px rgba(0, 0, 0, .5), 0 1px 0 rgba(255, 255, 255, .06);
+    font-size: 11px; font-weight: 500; color: rgba(235, 235, 245, .8); transition: background .1s;
+  }
+  .shortcuts button:active { background: rgba(0, 0, 0, .5); }
+  .shortcuts svg { width: 20px; height: 20px; color: #f2f2f4; }
 
   /* ---------- sheets ---------- */
   #scrim { position: fixed; inset: 0; background: rgba(0, 0, 0, .5); opacity: 0; pointer-events: none; transition: opacity .25s; }
   #scrim.on { opacity: 1; pointer-events: auto; }
   .sheet {
     position: fixed; left: 0; right: 0; bottom: 0; max-width: 440px; margin: 0 auto; max-height: 78%;
-    background: rgba(28, 28, 30, .92); backdrop-filter: blur(30px) saturate(1.6); -webkit-backdrop-filter: blur(30px) saturate(1.6);
+    background: rgba(28, 28, 30, .94); backdrop-filter: blur(30px) saturate(1.6); -webkit-backdrop-filter: blur(30px) saturate(1.6);
     border-radius: 24px 24px 0 0; padding: 10px 20px calc(env(safe-area-inset-bottom) + 22px);
     transform: translateY(105%); transition: transform .32s cubic-bezier(.2, .8, .2, 1); display: flex; flex-direction: column; touch-action: pan-y;
   }
@@ -95,10 +123,16 @@
   .list button.hit { background: var(--surface-2); }
   .list .live { margin-left: auto; font-size: 13px; color: var(--green); }
   .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .tile { height: 78px; border-radius: 16px; background: var(--surface-2); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font-size: 13px; transition: transform .1s, background .1s; }
+  .tile { height: 78px; border-radius: 16px; background: var(--surface-2); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font-size: 13px; transition: transform .1s; }
+  .tile.hit { transform: scale(.94); }
   .colors { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
   .colors button { height: 38px; border-radius: 12px; transition: transform .1s; }
   .colors button.hit { transform: scale(.94); }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; padding: 12px 14px; border-radius: 14px; background: var(--surface-2); font-size: 15px; }
+  .row small { display: block; font-size: 12px; color: var(--dim); }
+  .switch { flex: none; width: 50px; height: 30px; border-radius: 15px; background: #48484a; position: relative; transition: background .2s; }
+  .switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 26px; height: 26px; border-radius: 50%; background: #fff; transition: translate .2s; }
+  .switch.on { background: var(--green); } .switch.on::after { translate: 20px 0; }
   .typer { display: flex; gap: 10px; }
   .typer input { flex: 1; min-width: 0; height: 50px; padding: 0 16px; border: 0; border-radius: 14px; background: var(--surface-2); color: var(--ink); font: inherit; outline: none; user-select: text; -webkit-user-select: text; }
   .typer button { height: 50px; padding: 0 18px; border-radius: 14px; background: var(--ink); color: #000; font-weight: 600; display: grid; place-items: center; }
@@ -115,41 +149,47 @@
 </style>
 </head>
 <body>
-<main>
-  <header>
-    <div><h1>Tv</h1><div id="sub"><span class="dot" id="dot"></span><span id="state">Verbinden…</span></div></div>
-    <button class="round" id="power" aria-label="Aan/uit"><svg viewBox="0 0 24 24"><path d="M12 3v8"/><path d="M17.7 6.8a8 8 0 1 1-11.4 0"/></svg></button>
-  </header>
+<main><div class="remote">
+  <div class="top">
+    <div class="status"><span id="dot"></span><span id="state">Verbinden…</span></div>
+    <button id="power" aria-label="Aan/uit"><svg viewBox="0 0 24 24"><path d="M12 3v8"/><path d="M17.7 6.8a8 8 0 1 1-11.4 0"/></svg></button>
+  </div>
 
-  <div id="pad" aria-label="Veeg om te bewegen, tik voor OK">
+  <div id="pad" aria-label="Veeg om te bewegen, druk in het midden voor OK">
     <svg class="edge" data-dir="up" viewBox="0 0 24 24"><path d="m7 14 5-5 5 5"/></svg>
     <svg class="edge" data-dir="down" viewBox="0 0 24 24"><path d="m7 10 5 5 5-5"/></svg>
     <svg class="edge" data-dir="left" viewBox="0 0 24 24"><path d="m14 7-5 5 5 5"/></svg>
     <svg class="edge" data-dir="right" viewBox="0 0 24 24"><path d="m10 7 5 5-5 5"/></svg>
-    <div id="glow"></div><div id="ok-ring"></div>
-    <div id="hint">Veeg om te bewegen · tik voor OK</div>
+    <div class="disc">OK</div>
+    <div id="glow"></div>
   </div>
 
   <div class="keys">
-    <button class="round" data-key="back" aria-label="Terug"><svg viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></svg></button>
-    <button class="round" data-key="home" aria-label="Home"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8"/></svg></button>
-    <button class="round" id="playpause" aria-label="Afspelen/pauze"><svg viewBox="0 0 24 24"><path d="m4 5 8 7-8 7z" fill="currentColor" stroke="none"/><path d="M16 5v14M20 5v14"/></svg></button>
-    <button class="round" id="kbd" aria-label="Typen"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg></button>
-    <button class="round" data-key="mute" aria-label="Geluid uit"><svg viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="m22 9-6 6M16 9l6 6"/></svg></button>
-    <div class="pill">
-      <button data-key="voldown" data-repeat aria-label="Zachter"><svg viewBox="0 0 24 24"><path d="M6 12h12"/></svg></button>
-      <span id="vol">–</span>
+    <div class="k"><button class="btn" data-key="back" aria-label="Terug"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button><span class="lbl">Terug</span></div>
+    <div class="k"><button class="btn" data-key="home" aria-label="Home"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9v12h14V9"/><path d="M10 21v-6h4v6"/></svg></button><span class="lbl">Home</span></div>
+    <div class="k"><button class="btn" data-key="settings" aria-label="Menu"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button><span class="lbl">Menu</span></div>
+
+    <div class="k tall"><div class="rocker">
       <button data-key="volup" data-repeat aria-label="Harder"><svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></svg></button>
-    </div>
-    <button class="round" data-key="settings" aria-label="Snelmenu"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
+      <span id="vol">–</span>
+      <button data-key="voldown" data-repeat aria-label="Zachter"><svg viewBox="0 0 24 24"><path d="M6 12h12"/></svg></button>
+    </div><span class="lbl">Volume</span></div>
+    <div class="k"><button class="btn" id="playpause" aria-label="Afspelen/pauze"><svg viewBox="0 0 24 24"><path d="m3 5 8 7-8 7z" fill="currentColor" stroke="none"/><path d="M15.5 5v14M20.5 5v14"/></svg></button><span class="lbl">Play/pauze</span></div>
+    <div class="k tall"><div class="rocker">
+      <button data-key="chup" aria-label="Kanaal omhoog"><svg viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></svg></button>
+      <span></span>
+      <button data-key="chdown" aria-label="Kanaal omlaag"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+    </div><span class="lbl">Kanaal</span></div>
+    <div class="k"><button class="btn" data-key="mute" aria-label="Geluid uit"><svg viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="m22 9-6 6M16 9l6 6"/></svg></button><span class="lbl">Stil</span></div>
   </div>
 
-  <nav>
+  <nav class="shortcuts">
     <button data-open="apps"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>Apps</button>
-    <button data-open="inputs"><svg viewBox="0 0 24 24"><path d="M9 3v4M15 3v4M6 7h12v4a6 6 0 0 1-12 0zM12 17v4"/></svg>Bronnen</button>
+    <button data-open="inputs"><svg viewBox="0 0 24 24"><path d="M14 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/></svg>Bron</button>
+    <button id="kbd"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>Typen</button>
     <button data-open="more"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/></svg>Meer</button>
   </nav>
-</main>
+</div></main>
 
 <div id="scrim"></div>
 <section class="sheet" id="apps"><div class="grab"></div><h2>Apps</h2><div class="scroll"><div class="apps" id="app-grid"></div></div></section>
@@ -157,21 +197,19 @@
 <section class="sheet" id="more"><div class="grab"></div><h2>Meer</h2>
   <div class="scroll">
     <div class="tiles">
-      <button class="tile" data-key="chup" aria-label="Kanaal +"><svg viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></svg>Kanaal +</button>
-      <button class="tile" data-key="rewind" aria-label="Terugspoelen"><svg viewBox="0 0 24 24"><path d="M11 18 3 12l8-6zM21 18l-8-6 8-6z"/></svg>Terug</button>
-      <button class="tile" data-key="forward" aria-label="Vooruitspoelen"><svg viewBox="0 0 24 24"><path d="m13 18 8-6-8-6zM3 18l8-6-8-6z"/></svg>Vooruit</button>
-      <button class="tile" data-key="chdown" aria-label="Kanaal −"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>Kanaal −</button>
-      <button class="tile" data-key="guide" aria-label="Gids"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11"/></svg>Gids</button>
+      <button class="tile" data-key="rewind" aria-label="Terugspoelen"><svg viewBox="0 0 24 24"><path d="M11 18 3 12l8-6zM21 18l-8-6 8-6z"/></svg>Terugspoelen</button>
+      <button class="tile" data-key="forward" aria-label="Vooruitspoelen"><svg viewBox="0 0 24 24"><path d="m13 18 8-6-8-6zM3 18l8-6-8-6z"/></svg>Vooruitspoelen</button>
       <button class="tile" data-key="info" aria-label="Info"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>Info</button>
-      <button class="tile" data-key="screenoff" aria-label="Scherm uit"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8M4 4l16 16"/></svg>Alleen geluid</button>
+      <button class="tile" data-key="guide" aria-label="Tv-gids"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11"/></svg>Tv-gids</button>
+      <button class="tile" data-key="screenoff" aria-label="Scherm uit"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8M4 4l16 16"/></svg>Scherm uit</button>
       <button class="tile" data-key="tvsettings" aria-label="Tv-instellingen"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>Instellingen</button>
-      <button class="tile" id="dpad-mode" aria-label="Pijltjes"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/></svg><span>Pijltjes</span></button>
     </div>
     <div class="colors">
       <button data-key="red" aria-label="Rood" style="background:#ff453a"></button><button data-key="green" aria-label="Groen" style="background:#30d158"></button>
       <button data-key="yellow" aria-label="Geel" style="background:#ffd60a"></button><button data-key="blue" aria-label="Blauw" style="background:#0a84ff"></button>
     </div>
-    <p class="note">"Alleen geluid" zet het beeld uit; elke knop zet het weer aan.</p>
+    <button class="row" id="dpad-mode"><span>Grote pijltjes<small>Tik aan de rand van het rondje om te bewegen</small></span><span class="switch"></span></button>
+    <p class="note">"Scherm uit" laat alleen het geluid aan; elke knop zet het beeld weer aan.</p>
   </div>
 </section>
 <section class="sheet" id="typing"><div class="grab"></div><h2>Typen op de tv</h2>
@@ -288,9 +326,9 @@ let start = null;
 function flash(dir) { const e = pad.querySelector(`[data-dir="${dir}"]`); e.classList.add('lit'); setTimeout(() => e.classList.remove('lit'), 160); }
 function arrow(dir) { flash(dir); press(dir); }
 function zone(x, y) {
-  const r = pad.getBoundingClientRect(), dx = (x - r.left) / r.width - .5, dy = (y - r.top) / r.height - .5;
-  const edge = arrows ? 0.12 : 0.32; // outside this, a tap is a direction
-  if (Math.max(Math.abs(dx), Math.abs(dy)) < edge) return 'ok';
+  // Relative to the centre, 1 = the rim. The middle disc is OK, the ring around it the four directions.
+  const r = pad.getBoundingClientRect(), dx = (x - r.left) / r.width * 2 - 1, dy = (y - r.top) / r.height * 2 - 1;
+  if (Math.hypot(dx, dy) < (arrows ? 0.34 : 0.56)) return 'ok';
   return Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'up' : 'down');
 }
 pad.addEventListener('pointerdown', (e) => {
@@ -298,7 +336,6 @@ pad.addEventListener('pointerdown', (e) => {
   const r = pad.getBoundingClientRect();
   start = { x: e.clientX, y: e.clientY, ax: e.clientX, ay: e.clientY, t: Date.now(), moved: false };
   glow.style.left = e.clientX - r.left + 'px'; glow.style.top = e.clientY - r.top + 'px'; glow.classList.add('on');
-  hideHint();
 });
 pad.addEventListener('pointermove', (e) => {
   if (!start) return;
@@ -317,16 +354,14 @@ pad.addEventListener('pointerup', (e) => {
   const still = !start.moved && Math.hypot(e.clientX - start.x, e.clientY - start.y) < 14;
   if (still) {
     const z = zone(e.clientX, e.clientY);
-    if (z === 'ok') { const ring = $('#ok-ring'); ring.classList.remove('go'); void ring.offsetWidth; ring.classList.add('go'); press('ok'); }
+    if (z === 'ok') { const d = pad.querySelector('.disc'); d.classList.add('down'); setTimeout(() => d.classList.remove('down'), 140); press('ok'); }
     else arrow(z);
   }
   start = null;
 });
 pad.addEventListener('pointercancel', () => { glow.classList.remove('on'); start = null; });
-function hideHint() { $('#hint').style.opacity = 0; localStorage.setItem('shelf.hint', '1'); }
-if (localStorage.getItem('shelf.hint')) $('#hint').hidden = true;
-function setArrows(on) { arrows = on; localStorage.setItem('shelf.dpad', on ? '1' : '0'); $('#dpad-mode span').textContent = on ? 'Pijltjes: aan' : 'Pijltjes'; $('#dpad-mode').classList.toggle('err', false); }
-tap($('#dpad-mode'), () => { setArrows(!arrows); toast(arrows ? 'Tikken aan de rand = pijltjes (groter vlak)' : 'Vegen en tikken'); });
+function setArrows(on) { arrows = on; localStorage.setItem('shelf.dpad', on ? '1' : '0'); pad.classList.toggle('arrows', on); $('#dpad-mode .switch').classList.toggle('on', on); }
+tap($('#dpad-mode'), () => setArrows(!arrows));
 setArrows(arrows);
 
 // ---------- sheets ----------
@@ -339,7 +374,7 @@ function sheet(id) {
 }
 tap($('#scrim'), () => sheet(null));
 document.querySelectorAll('[data-open]').forEach((b) => tap(b, () => { sheet(b.dataset.open); load(b.dataset.open); }));
-tap($('#kbd'), () => { hit($('#kbd')); sheet('typing'); setTimeout(() => $('#text').focus(), 320); });
+tap($('#kbd'), () => { sheet('typing'); setTimeout(() => $('#text').focus(), 320); });
 // swipe a sheet down to close it
 document.querySelectorAll('.sheet').forEach((s) => {
   let y0 = null;
