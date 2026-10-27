@@ -1,0 +1,4 @@
+TvRemote.xcodeproj/
+build/
+Payload/
+*.ipa

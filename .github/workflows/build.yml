@@ -1,0 +1,33 @@
+# Builds an unsigned TvRemote.ipa on a GitHub Mac; download it from the run's artifacts and sign/install it
+# with Sideloadly (your own Apple ID).
+name: Build iOS app
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate Xcode project
+        run: |
+          brew install xcodegen
+          xcodegen generate
+      - name: Build
+        run: |
+          xcodebuild -project TvRemote.xcodeproj -scheme TvRemote -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
+      - name: Package IPA
+        run: |
+          mkdir Payload
+          cp -R build/Build/Products/Release-iphoneos/Tv.app Payload/
+          zip -qry TvRemote.ipa Payload
+          ls -la TvRemote.ipa
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TvRemote-ipa
+          path: TvRemote.ipa
+          retention-days: 30
